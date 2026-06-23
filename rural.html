@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSOLUCK K-Rural Tour Leaflet</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style> 
+        /* body { font-family: 'Poppins', 'Noto Serif KR', sans-serif; background-color: #f3f4f6; }
+        
+        .leaflet-page {
+            width: 1242px;         
+            height: 878px;        
+            min-width: 1242px;
+            min-height: 878px;
+        }
+        .panel {
+            width: 414px;         
+            height: 100%;
+        } */
+
+        
+        .serif-title { font-family: 'Noto Serif KR', serif; }
+        .bg-rural-green { background-color: #2D4A3E; }
+
+        /* ===================================================
+        1. 모바일 우선 세팅 (디폴트: 부드러운 스와이프 슬라이드)
+        =================================================== */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden; /* 모바일 우측 탈출 방지 */
+            background-color: #e5e7eb;
+            font-family: 'Poppins', 'Noto Serif KR', sans-serif;
+        }
+
+        .leaflet-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            /* align-items: center; */
+            /* justify-content: center; */
+        }
+
+        .leaflet-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* 모바일 화면에서는 모든 패널이 화면 하나에 쏙 들어오도록 강제 제한 */
+        .panel {
+            flex: 0 0 100%; /* 100vw 대신 100%를 사용하여 스크롤바 왜곡 방지 */
+            width: 100%;
+            height: 100%;
+            scroll-snap-align: start;
+            box-sizing: border-box;
+            overflow: hidden auto;
+            background-color: #f3f4f6;
+        }
+
+        /* ===================================================
+        2. 미디어 쿼리: PC 세팅 (769px 이상일 때 인쇄 판형 완벽 고정)
+        =================================================== */
+        @media (min-width: 769px) {
+            html, body {
+                /* overflow-x: visible; */
+                /* overflow-y: auto; */
+            }
+
+            .leaflet-wrapper {
+                /* width: auto;
+                height: auto; */
+                padding: 50px;
+                overflow: auto;
+            }
+
+            .leaflet-container {
+                display: grid;
+                grid-template-columns: repeat(3, 414px); /* A4 3분할 황금비율 고정 414px*/
+                grid-template-rows: 878.22px 878.22px;
+                width: 1242px;
+                height: 1804px;
+                overflow: visible;
+                gap: 48px 0; 
+            }
+
+            .panel {
+                width: 100%;
+                /* height: 878px !important; */
+                flex: none;
+                overflow: hidden; /* PC에서는 인쇄물처럼 깔끔하게 자름 */
+            }
+
+            /* 레이아웃 순서 및 경계선 재조립 */
+            .p-notice  { order: 1; border-right: 1px dashed #cbd5e1; } 
+            .p-back    { order: 2; border-right: 1px dashed #cbd5e1; }
+            .p-cover   { order: 3; } 
+
+            .p-yeongdong { order: 5; border-right: 1px dashed #cbd5e1; }
+            .p-ganghwa   { order: 4; border-right: 1px dashed #cbd5e1; }
+            .p-why       { order: 6; }
+        }
+
+        /* ===================================================
+        러시아어(ru) 선택 시 전용 스타일 강제 교정
+        =================================================== */
+        .lang-ru h1, 
+        .lang-ru .p1_title, 
+        .lang-ru .p2_title {
+            font-size: 1.25rem !important; 
+            letter-spacing: -0.05em !important; /* 자간을 좁혀서 가로폭 확보 */
+            line-height: 1.1 !important;        /* 행간을 조여서 위아래 쳐짐 방지 */
+        }
+
+        /* 3. 코스 타임라인 등 밀림이 심한 내용물 구역 콤팩트화 */
+        .lang-ru .courses-desc {
+            font-size: 11px !important;
+            line-height: 1.2 !important;
+        }
+
+        /* 4. 마진이나 패딩 때문에 아래로 넘치는 경우 여백을 유연하게 축소 */
+        .lang-ru .mt-3 {
+            margin-top: 0.5rem !important;
+        }
+        .lang-ru .p-8 {
+            padding: 1.25rem !important;
+        }
+        .lang-ru * {
+        /* .leading-relaxed, .lang-ru .leading-normal, .lang-ru .leading-snug { */
+            line-height: 1 !important;
+        }
+        .lang-ru .w-65 {
+            width: 306px !important;
+        }
+        .lang-ru h4 {
+            margin-bottom:2px !important;
+        }
+
+        /* ===================================================
+        인쇄 전용 스타일 (@media print)
+        =================================================== */
+        @media print {
+            /* 1. 불필요한 UI 및 요소 숨기기 */
+            body > *:not(.leaflet-wrapper),
+            button, .fixed, nav, footer, script {
+                display: none !important;
+            }
+
+            /* 2. 배경색 및 이미지 강제 출력 */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                box-shadow: none !important;
+            }
+
+            /* 3. 인쇄 용지 설정 (A4 가로, 여백 제로) */
+            @page {
+                size: A4 landscape;
+                margin: 0; /* 브라우저 여백을 완전히 없애야 scale 계산이 정확해집니다. */
+            }
+
+            html, body {
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important; /* 인쇄 시 스크롤바 표시 방지 */
+                background: #fff !important;
+            }
+
+            /* 4. 핵심: 리플렛 전체 크기를 A4 용지 비율에 맞춰 강제 scale 축소 */
+            .leaflet-wrapper {
+                display: block !important;
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                
+                /* 원래 만들었던 PC 기준 전체 판형 크기 고정 */
+                width: 1242px !important;
+                height: 1756px !important; /* 878px(바깥면) + 878px(안쪽면) = 총 2장 높이 */
+                
+                /* 브라우저 인쇄 창 가로폭에 맞춰 자동 scale 압축 (css 함수 활용) */
+                transform: scale(calc(100vw / 1242)) !important;
+                transform-origin: top left !important;
+            }
+
+            /* 5. 3면씩 묶여있는 컨테이너 정렬 */
+            .leaflet-container {
+                display: grid !important;
+                grid-template-columns: repeat(3, 414px) !important;
+                grid-template-rows: 878px 878px !important;
+                width: 1242px !important;
+                height: 1756px !important;
+                overflow: hidden;
+            }
+
+            .panel {
+                display: block !important;
+                width: 414px !important;
+                height: 878px !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important; /* 내부에 넘치는 콘텐츠 강제 가둠 */
+            }
+
+            /* 순서 재배치 */
+            .p-notice    { order: 1 !important; border-right: 1px dashed #cbd5e1; } 
+            .p-back      { order: 2 !important; border-right: 1px dashed #cbd5e1; }
+            .p-cover     { order: 3 !important; page-break-after: always !important; } 
+            .p-yeongdong { order: 5 !important; border-right: 1px dashed #cbd5e1; }
+            .p-ganghwa   { order: 4 !important; border-right: 1px dashed #cbd5e1; }
+            .p-why       { order: 6 !important; }
+
+            .justify-between {
+                display: flex !important;
+                width: 100% !important;
+            }
+            
+            /* 자식 요소들이 가질 수 있는 최소 너비를 확보해주거나 늘려줌 */
+            .justify-between > * {
+                flex-shrink: 0 !important;
+                /* 혹은 가로 균등 배분이 필요하다면 아래 속성 사용 */
+                /* flex: 1 !important; */
+            }
+                          
+            .mt-3.w-full.h-110.bg-cover {
+                /* 인쇄 시에는 고정 높이를 풀고, 내용물에 맞추거나 적절한 높이로 축소 */
+                height: auto !important; 
+                min-height: 200px !important; /* 종이 안에서 넘치지 않을 정도의 안전한 높이 */
+                width: 100%;
+                margin-top: 0.5rem !important; /* mt-3 마진이 과도하면 줄임 */
+                padding: 10px;
+                background-size: cover;
+            }
+
+            /* 2. 그 아래에 가려졌거나 밀렸던 정중앙 flex 박스 복구 */
+            .flex.w-full.h-full.items-center.justify-center {
+                display: flex !important;
+                width: 100% !important;
+                height: auto !important; /* 부모가 밀지 않으므로 auto나 고정값 취택 */
+                min-height: 60px;
+                align-items: center;
+                justify-content: center;
+                /* 혹시나 다음 장으로 밀리는 현상 방지 */
+                page-break-inside: avoid !important; 
+                flex: 1;
+            }
+            .panel.p-back::before {
+                display: block !important;
+                content: "" !important;
+                position: absolute !important;
+                inset: 0 !important;
+                z-index: 0 !important;
+                
+                /* 1. 실제 출력 엔진을 위한 배경 강제 주입 */
+                background-image: url('rural/patt1.png') !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+
+                /* 2. 충돌을 일으키는 bg-repeat-space 대신 표준 repeat 사용 */
+                background-repeat: repeat !important;
+                background-size: 40px !important;
+
+                /* 3. 핵심: 출력 시 날아가는 opacity를 보완하기 위해 투명도를 100%로 올리거나 필터 사용 */
+                opacity: 1 !important; 
+                /* 만약 패턴이 너무 진하게 출력된다면 프린터가 인식할 수 있는 filter 속성으로 우회합니다 */
+                filter: opacity(0.3) !important; 
+            }
+        }
+
+    </style>
+</head>
+<body class="p-8 flex flex-col gap-12">
+
+    <div class="[@media(hover:hover)]:hover:opacity-100 opacity-10 fixed bottom-4 right-7 bg-white shadow-md rounded-full p-1 z-50 flex gap-1 border border-gray-200">
+        <button onclick="switchLang('en')" id="btn-en" class="px-3 py-2 rounded-full text-xs font-semibold bg-emerald-700 text-white transition-all">EN</button>
+        <button onclick="switchLang('ko')" id="btn-ko" class="px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all">KO</button>
+        <button onclick="switchLang('zh')" id="btn-zh" class="px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all">ZH</button>
+        <button onclick="switchLang('ru')" id="btn-ru" class="px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all">RU</button>
+    </div>
+
+    <div class="leaflet-wrapper">
+        <div class="leaflet-container">
+            <div class="panel p-cover relative flex flex-col justify-between overflow-hidden bg-emerald-950 text-white"> 
+                <div class="absolute inset-0 opacity-40 bg-cover bg-center" style="background-image: url('rural/ricardo-gomez-angel-Gh_Oc8USMe8-unsplash.jpg');"></div>
+                <div class="absolute inset-0 bg-gradient-to-b from-emerald-950/70 via-emerald-950/40 to-emerald-950/90"></div>
+
+                <div class="relative p-8 pt-12 z-10">
+                     <div class="p-2 bg-contain bg-no-repeat w-[120px] h-10" style="background-image: url('rural/SSOLUCK logo_Color.png');"></div>
+                </div>
+                
+                <div class="relative p-8 pb-12 z-10 flex flex-col gap-3">
+                    <span class="text-xs font-bold tracking-widest text-emerald-400 uppercase" data-key="cover_tag">Premium Rural Tour</span>
+                    <h1 class="text-3xl font-extrabold leading-tight serif-title" id="cover-title-target" data-key="cover_title">Feel the Rhythm,<br>Weave the History</h1>
+                    <p class="text-sm text-emerald-100/80 font-light" data-key="cover_sub">Two unique journeys into Korea’s hidden heritage.</p>
+                </div>
+            </div>
+
+            <div class="panel p-ganghwa p-6 flex flex-col justify-between border-r border-gray-200">
+                <div>
+                    <div class="flex justify-between items-start">
+                        <span class="text-[12px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded" data-key="p2_opt">TOUR 02</span>
+                        <span class="text-xs font-semibold text-gray-400 serif-title" data-key="p2_loc">인천 강화 (Ganghwa)</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 my-2 serif-title" data-key="p2_title">역사와 공예: 강화 화문석 투어</h2>
+                    <p class="text-xs text-gray-500 mt-1 leading-relaxed" data-key="p2_desc">5,000년 역사의 숨결이 살아있는 박물관 섬에서 왕실 진상품 고급 공예를 경험하는 투어</p>
+                    
+                    <div class="flex gap-1 h-40 my-4 [.lang-ru_&]:h-35">
+                        <div class="w-full h-full bg-cover bg-center rounded-lg shadow-inner" style="background-image: url('rural/tour3.png');"></div>
+                        <div class="w-full h-full bg-cover bg-center rounded-lg shadow-inner" style="background-image: url('rural/tour4.png');"></div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <h4 class="ru:text-xs text-s font-bold text-amber-900 flex items-center gap-1">
+                                <span data-key="p2_h1">Open-Air Museum: 역사 탐방</span>
+                            </h4>
+                            <p class="text-[13px] text-gray-600 mt-0.5 pl-4 leading-normal" data-key="p2_c1">유네스코 세계문화유산인 고인돌부터 고려궁지, 조선의 성곽까지 한국 역사의 축소판 걷기</p>
+                        </div>
+                        <div>
+                            <h4 class="ru:text-xs text-s font-bold text-amber-900 flex items-center gap-1">
+                                <span data-key="p2_h2">Royal Straw Craft: 화문석 클래스</span>
+                            </h4>
+                            <p class="text-[13px] text-gray-600 mt-0.5 pl-4 leading-normal" data-key="p2_c2">천연 왕골을 한 올 한 올 장인과 함께 엮어, 세상에 하나뿐인 나만의 프리미엄 미니 인테리어 소품 제작</p>
+                        </div>
+                    </div>
+                    <div class="mt-5" id="comp-tour-2"></div>
+                    <div class="text-[10px] text-teal-700" data-key="add_partner"></div>
+                </div>
+            </div>
+
+            <div class="panel p-yeongdong p-6 flex flex-col justify-between border-r border-gray-200">
+                <div>
+                    <div class="flex justify-between items-start">
+                        <span class="text-[12px] font-bold bg-purple-100 text-purple-800 px-2 py-0.5 rounded" data-key="p1_opt">TOUR 01</span>
+                        <span class="text-xs font-semibold text-gray-400 serif-title" data-key="p1_loc">충북 영동 (Yeongdong)</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 my-2 serif-title" data-key="p1_title"></h2>
+                    <p class="text-xs text-gray-500 mt-1 leading-relaxed" data-key="p1_desc">|리듬과 맛: 영동 국악·포도 투어| 한국 전통 음악의 흥과 새콤달콤한 제철 포도 수확을 동시에 즐기는 오감 만족 투어</p>
+                    
+                    <div class="flex gap-1 h-40 my-4 [.lang-ru_&]:h-35">
+                        <div class="w-full h-full bg-cover bg-center rounded-lg shadow-inner" style="background-image: url('rural/tour1.png');"></div>
+                        <div class="w-full h-full bg-cover bg-center rounded-lg shadow-inner" style="background-image: url('rural/tour2.png');"></div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <h4 class="text-s font-bold text-purple-900 flex items-center gap-1">
+                                <span data-key="p1_h1">K-Rhythm: 국악 체험</span>
+                            </h4>
+                            <p class="text-[13px] text-gray-600 mt-0.5 pl-4 leading-normal" data-key="p1_c1">세계 최대의 북 '천고' 관람 및 전통 악기(장구 등)를 직접 배우고 연주해보는 흥겨운 문화 체험</p>
+                        </div>
+                        <div>
+                            <h4 class="text-s font-bold text-purple-900 flex items-center gap-1">
+                                <span data-key="p1_h2">Sweet Grape: 포도 수확</span>
+                            </h4>
+                            <p class="text-[13px] text-gray-600 mt-0.5 pl-4 leading-normal" data-key="p1_c2">과수원에서 싱그러운 포도를 직접 수확하고, 농가에서 정성껏 준비한 로컬 시골 밥상 맛보기</p>
+                        </div>
+                    </div>
+                    <div class="mt-5" id="comp-tour-1"></div>
+                    <div class="text-[10px] text-rose-300" data-key="add_info">
+                        The itinerary is subject to change depending on local circumstances. Please check the booking page for detailed product information.
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel p-why bg-emerald-900/5 flex flex-col relative">
+                
+                <div class="p-6 z-11">
+                    <span class="text-[12px] font-bold tracking-widest text-emerald-800 uppercase" data-key="why_tag">Why SSOLUCK?</span>
+                    <h2 class="text-xl font-bold text-emerald-950 mt-1 serif-title" data-key="why_title">가장 한국다운 로컬 여행</h2>
+                    <hr class="w-8 border-emerald-800 my-3">
+                    
+                    <div class="space-y-6 mt-6">
+                        <div class="flex gap-3 items-start">
+                            <div class="w-15 py-5 aspect-square bg-contain bg-no-repeat rounded-full text-md" style="background-image: url('rural/gift.png');"></div>
+                            <div style="min-width: 314px;">
+                                <h4 class="text-xs font-bold text-gray-800" data-key="feat_h1">특별한 로컬 기념품</h4>
+                                <p class="text-[12px] text-gray-500 mt-0.5 leading-normal" data-key="feat_c1">내가 직접 수확한 포도, 내가 직접 만든 전통 화문석 소품 등 평생 소장할 소중한 추억을 선물합니다.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 items-start">
+                            <div class="w-15 py-5 aspect-square bg-contain bg-no-repeat rounded-full text-md" style="background-image: url('rural/guide.png');"></div>
+                            <div style="min-width: 314px;">
+                                <h4 class="text-xs font-bold text-gray-800" data-key="feat_h2">전문 글로벌 가이드</h4>
+                                <p class="text-[12px] text-gray-500 mt-0.5 leading-normal" data-key="feat_c2">한국의 역사와 문화를 깊이 있고 흥미롭게 전달해 줄 친절한 전문 영어 가이드가 전 일정 동행합니다.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 items-start">
+                            <div class="w-15 py-5 aspect-square bg-contain bg-no-repeat rounded-full text-md" style="background-image: url('rural/bus.png');"></div>
+                            <div style="min-width: 314px;">
+                                <h4 class="text-xs font-bold text-gray-800" data-key="feat_h3">안전하고 편안한 이동</h4>
+                                <p class="text-[12px] text-gray-500 mt-0.5 leading-normal" data-key="feat_c3">대중교통으로 가기 힘든 숨은 명소까지 서울에서 출발하는 프리미엄 전용 차량으로 안전하게 모십니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="z-10 absolute bg-no-repeat bg-contain right-[-60px] top-[-60px] w-40 h-40" style="background-image: url('rural/patt1.png');"></div>
+                <div class="mt-3 w-full h-110 bg-cover text-center" style="background-image: url('rural/pattern.png');">
+                    <div class="text-[22px] font-bold text-center mt-6 mb-12">Special Booking offers & Info</div>
+                    <span class="text-[16px] bg-taupe-500 text-white p-8 py-4 page-layer-4 rounded-full font-semibold uppercase tracking-wider outline-2 outline-dashed outline-white/60 -outline-offset-4" data-key="book_now">Book Now</span>
+                    <div class="w-28 h-28 mt-14 p-1 bg-white  mx-auto border-4 border-taupe-500 flex items-center justify-center">
+                        <div class="bg-cover w-full h-full" style="background-image: url('rural/ssoluck_qr.PNG');"></div>
+                    </div>
+                    <div class="bg-emerald-950 text-emerald-100 m-6 p-4 rounded-xl text-center shadow-md">
+                        <p class="text-[13px] italic" data-key="review_text">"The most authentic and unforgettable Korean culture experience ever!"</p>
+                        <p class="text-[9px] text-emerald-400 mt-1 font-semibold">- James, Tour Participant -</p>
+                    </div>
+                </div>
+                
+                <div class="flex w-full h-full items-center justify-center">
+                    <div class="whitespace-nowrap p-2 bg-contain bg-no-repeat w-[90px]" style="background-image: url('rural/SSOLUCK\ logo_Color2.png');"></div>
+                    <div class="w-65 pl-2 py-1 text-xs border-l-2 border-taupe-500 font-light text-gray-500" data-key="contact_msg">
+                        Discover more and book at ssoluck.com
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel p-notice p-8 flex flex-col justify-between border-r border-dashed border-gray-300 bg-[#fbf9f5]">
+                <div>
+                    <span class="text-xs font-bold tracking-widest text-emerald-700 uppercase" data-key="notice_sub1">GUIDE</span>
+                    <h3 class="text-2xl font-bold text-gray-800 mt-1 serif-title" data-key="notice_title1">특별 혜택 및 투어 안내</h3>
+                    <hr class="w-12 border-emerald-700 my-3">
+                    
+                    <ul class="space-y-3 text-[14px] text-gray-600 leading-relaxed">
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-700 font-bold">•</span>
+                            <span data-key="notice_i1">전문 영어 가이드 동행으로 소통 걱정 제로</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-700 font-bold">•</span>
+                            <span data-key="notice_i2">핵심 거점 왕복 전용 셔틀 차량 제공</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-700 font-bold">•</span>
+                            <span data-key="notice_i3">투어 특성상 편안한 복장과 운동화 착용을 권장합니다.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <span class="text-xs font-bold tracking-widest text-emerald-700 uppercase" data-key="notice_sub2">WHAT'S INCLUDED</span>
+                    <h3 class="text-2xl font-bold text-gray-800 mt-1 serif-title" data-key="notice_title2">투어 포함사항</h3>
+                    <hr class="w-12 border-emerald-700 my-3">
+                    
+                    <ul class="space-y-3 text-[14px] text-gray-600 leading-relaxed">
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-700 font-bold">✓</span>
+                            <span data-key="include1">전문 영어 투어 가이드</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-700 font-bold">✓</span>
+                            <span data-key="include2">전용 차량 (출발 인원수 맞춤: 28인승)</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-700 font-bold">✓</span>
+                            <span data-key="include3">식사 1회 (점심)</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-700 font-bold">✓</span>
+                            <span data-key="include4">일정에 포함된 입장/체험료</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <div class="w-70 bg-emerald-900 my-2 mx-auto px-4 py-3 rounded-full border border-gray-200 shadow-sm items-center text-center text-[25px] text-emerald-100 outline-2 outline-dashed outline-white/60 -outline-offset-4">$99 
+                        <span class="text-xs text-emerald-400" data-key="price_condition"> * 1Day, 20pax</span>
+                    </div>
+                    <div class="bg-white px-4 py-5 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center">
+                        <p class="text-xs font-semibold text-gray-500 mb-4" data-key="scan_book">Scan to Book Your Adventure</p>
+                        <div class="flex flex-row gap-10 items-center text-center">
+                            <div style="background-image: url('rural/297.png');" class="bg-cover w-24 h-24 bg-gray-100 border-2 border-gray-800 flex items-center justify-center font-mono text-[12px] p-2 text-center text-gray-400"></div>
+                            <div style="background-image: url('rural/298.png');" class="bg-cover w-24 h-24 bg-gray-100 border-2 border-gray-800 flex items-center justify-center font-mono text-[12px] p-2 text-center text-gray-400"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel p-back p-8 flex flex-col justify-between items-center text-center border-r border-dashed border-gray-300 bg-[#f7f5f0] relative before:absolute before:w-full before:inset-0 before:z-0 before:bg-[url('rural/patt1.png')] before:opacity-30 before:bg-size-[40px] before:bg-repeat-space w-full h-64">
+                <div class="z-10 w-full text-right">
+                    <span class="text-[12px] font-mono tracking-widest text-gray-400">SSOLUCK LOCAL SERIES</span>
+                </div>
+                
+                <div class="z-10 flex flex-col items-center gap-2">
+                    <div class="whitespace-nowrap p-2 bg-contain bg-no-repeat w-[173px] h-10" style="background-image: url('rural/SSOLUCK\ logo_Color2.png');"></div>
+                    <p class="text-xs tracking-widest text-gray-400 uppercase" data-key="brand_slogan">Connect to Real Korea</p>
+                </div>
+
+                <div class="z-10 text-[13px] text-gray-500 leading-normal border-t w-full pt-4">
+                    <p class="font-semibold text-gray-700">PREMIUMPASS INTERNATIONAL Co., Ltd.</p>
+                    <p>Contact: ssoluck@tothepp.com</p>
+                    <p class="mt-2 text-gray-400">© 2026 SSOLUCK. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const i18nData = {
+            en: {
+                cover_tag: "Premium Rural Tour",
+                cover_title: "Feel the Rhythm,<br>Weave the History",
+                cover_sub: "Two unique journeys into Korea’s hidden heritage.",
+                notice_sub1: "GUIDE ONE",
+                notice_sub2: "GUIDE TWO",
+                notice_title1: "Special Booking Offers",
+                notice_title2: "Tour Included",
+                notice_i1: "Full itinerary accompanied by a professional English-speaking guide.",
+                notice_i2: "Round-trip dedicated shuttle vehicle provided from major hubs.",
+                notice_i3: "Comfortable clothing and walking shoes are highly recommended.",
+                include1: "Professional English-speaking tour guide",
+                include2: "Private vehicle (28-seater customized for group size)",
+                include3: "1 meal (Lunch)",
+                include4: "Admission and experience fees included in the itinerary",
+                scan_book: "Scan to Book Your Adventure",
+                brand_slogan: "Connect to Real Korea",
+                p1_opt: "TOUR 02",
+                p1_loc: "Yeongdong, Chungbuk",
+                p1_title: "Beat the Buk, Play the Janggu",
+                p1_desc: "<span class='font-bold text-purple-900'>Rhythm & Flavor: K-Music & Grape Tour</span> A sensory journey blending the soul of Korean traditional music with harvesting sweet seasonal grapes.",
+                p1_h1: "K-Rhythm: Gugak Experience",
+                p1_c1: "See 'Cheongo', the world's largest drum, and play traditional instruments like the Janggu.",
+                p1_h2: "Sweet Grape: Harvest Season",
+                p1_c2: "Pick fresh grapes in the orchard and enjoy an authentic local countryside meal.",
+                p2_opt: "TOUR 01",
+                p2_loc: "Ganghwa, Incheon",
+                p2_title: "Ganghwa Time Gate",
+                p2_desc: "<span class='font-bold text-amber-900'>History & Craft: Ganghwa Hwamunseok Tour</span> Explore an open-air museum island with 5,000 years of history and craft a royal straw mat masterpiece.",
+                p2_h1: "Open-Air Museum: History Walk",
+                p2_c1: "Walk through Korea's history from UNESCO Dolmens to ancient Goryeo palaces and fortresses.",
+                p2_h2: "Royal Straw Craft: Hwamunseok Class",
+                p2_c2: "Weave natural sedge structures with an artisan to make your own premium interior souvenir.",
+                book_now: "Book Now",
+                price_condition: "* 1Day, 20pax",
+                why_tag: "Why SSOLUCK?",
+                why_title: "The Root of K-Culture",
+                feat_h1: "Authentic Souvenirs",
+                feat_c1: "Take home unique items you crafted or harvested yourself to cherish forever.",
+                feat_h2: "Expert English Guides",
+                feat_c2: "Deep dive into history and culture with storytelling from friendly global experts.",
+                feat_h3: "Stress-Free Transport",
+                feat_c3: "Travel safely to hidden rural destinations via a premium shuttle from Seoul.",
+                review_text: `"The most authentic and unforgettable<br>Korean culture experience ever!"`,
+                add_info: "※ The itinerary is subject to change depending on local circumstances<br>Please check the booking page for detailed product information.",
+                tour1: {
+                    courses: [
+                        {time: "10:00", title: "Yeongdong Gugak Experience Village", desc: "A stay-and-experience cultural space to learn and play traditional Korean music."},
+                        {time: "13:00", title: "Rainbow Healing Center", desc: "A complex wellness center to relieve daily fatigue with themes of light, wind, and water."},
+                        {time: "14:00", title: "Heukjinju Grape Experience Farm", desc: "A fresh harvesting experience to pick and taste sweet, juicy Yeongdong grapes."},
+                        {time: "15:00", title: "Wollyubong Peak", desc: "A picturesque landscape of stunning cliffs and rivers where even the moon lingers."}
+                    ],
+                },
+                tour2: {
+                    courses: [
+                        {time: "10:00", title: "Ganghwa Dolmen Sites", desc: "Ancient Stone Age tombs from world heritage."},
+                        {time: "11:00", title: "Goryeogung Palace Site", desc: "Historic palace grounds of the Goryeo dynasty."},
+                        {time: "13:00", title: "Joyang Bangjik & Sochang Experience Hall", desc: "Retro textile factory and traditional weaving craft."},
+                        {time: "14:00", title: "Ganghwa Hwamunseok Village", desc: "Unique hands-on craft of royal sedge mats."},
+                        {time: "15:00", title: "Gwangseongbo Fortress", desc: "Scenic walk along a historic coastal fortress."}
+                    ],
+                },
+                add_partner: "※ Supported by the <b>Korea Rural Community Corporation</b>, <b>the Ministry of Agriculture, Food and Rural Affairs</b>, and <b>Ganghwa-gun</b>.",
+                contact_msg : "Discover more and book at ssoluck.com<br>contact: ssoluck@tothepp.com"
+            },
+            ko: {
+                cover_tag: "프리미엄 농촌 여행",
+                cover_title: "리듬을 느끼고,<br>역사를 엮다",
+                cover_sub: "한국의 숨겨진 유산으로 떠나는 두 가지 특별한 여정.",
+                notice_sub1: "GUIDE ONE",
+                notice_sub2: "GUIDE TWO",
+                notice_title1: "특별 혜택 및 투어 안내",
+                notice_title2: "투어 포함사항",
+                notice_i1: "전문 영어 가이드 동행으로 소통 걱정 제로",
+                notice_i2: "핵심 거점 왕복 전용 셔틀 차량 제공",
+                notice_i3: "투어 특성상 편안한 복장과 운동화 착용을 권장합니다.",
+                include1: "전문 영어 투어 가이드",
+                include2: "전용 차량 (출발 인원수 맞춤: 28인승)",
+                include3: "식사 1회 (점심)",
+                include4: "일정에 포함된 입장/체험료",
+                scan_book: "QR코드를 스캔하여 예약하세요",
+                brand_slogan: "진짜 한국을 만나다",
+                p1_opt: "상품 02",
+                p1_loc: "충북 영동",
+                p1_title: "북치고 장구치고",
+                p1_desc: "<span class='font-bold text-purple-900'>리듬과 맛: 영동 국악·포도 투어</span> 한국 전통 음악의 흥과 새콤달콤한 제철 포도 수확을 동시에 즐기는 오감 만족 투어",
+                p1_h1: "K-Rhythm: 국악 체험",
+                p1_c1: "세계 최대의 북 '천고' 관람 및 전통 악기(장구 등)를 직접 배우고 연주해보는 흥겨운 문화 체험",
+                p1_h2: "Sweet Grape: 포도 수확",
+                p1_c2: "과수원에서 싱그러운 포도를 직접 수확하고, 농가에서 정성껏 준비한 로컬 시골 밥상 맛보기",
+                p2_opt: "상품 01",
+                p2_loc: "인천 강화",
+                p2_title: "천년을 걷는 강화 시간여행",
+                p2_desc: "<span class='font-bold text-amber-900'>역사와 공예: 강화 화문석 투어</span> 5,000년 역사의 숨결이 살아있는 박물관 섬에서 왕실 진상품 고급 공예를 경험하는 투어",
+                p2_h1: "Open-Air Museum: 역사 탐방",
+                p2_c1: "유네스코 세계문화유산인 고인돌부터 고려궁지, 조선의 성곽까지 한국 역사의 축소판 걷기",
+                p2_h2: "Royal Straw Craft: 화문석 클래스",
+                p2_c2: "천연 왕골을 한 올 한 올 장인과 함께 엮어, 세상에 하나뿐인 나만의 프리미엄 미니 인테리어 소품 제작",
+                book_now: "지금 예약하기",
+                price_condition: "* 1일, 20명 출발",
+                why_tag: "쏠럭을 선택해야 하는 이유",
+                why_title: "가장 한국다운 로컬 여행",
+                feat_h1: "특별한 로컬 기념품",
+                feat_c1: "내가 직접 수확한 포도, 내가 직접 만든 전통 화문석 소품 등 평생 소장할 소중한 추억을 선물합니다.",
+                feat_h2: "전문 글로벌 가이드",
+                feat_c2: "한국의 역사와 문화를 깊이 있고 흥미롭게 전달해 줄 친절한 전문 영어 가이드가 전 일정 동행합니다.",
+                feat_h3: "안전하고 편안한 이동",
+                feat_c3: "대중교통으로 가기 힘든 숨은 명소까지 서울에서 출발하는 프리미엄 전용 차량으로 안전하게 모십니다.",
+                review_text: `"내 인생 가장 한국적이고<br>잊지 못할 전통문화 체험이었습니다!"`,
+                add_info: "※ 현지상황에 따라 일정이 변경될 수 있습니다<br>자세한 상품 정보는 예약 페이지에서 확인하세요.",
+                tour1: {
+                    courses: [
+                        {time: "10:00", title: "영동국악체험촌", desc: "전통 우리 소리를 직접 배우고 연주하는 체류형 국악 문화 공간."},
+                        {time: "13:00", title: "레인보우힐링센터", desc: "빛과 바람, 물을 테마로 일상의 피로를 푸는 복합 웰니스 치유 공간."},
+                        {time: "14:00", title: "흙진주포도체험마을", desc: "새콤달콤한 영동 포도를 직접 따고 맛보는 싱그러운 수확 체험."},
+                        {time: "15:00", title: "월류봉", desc: "달도 머물다 갈 만큼 수려한 절벽과 강물이 어우러진 한폭의 산수화."}
+                    ],
+                },
+                tour2: {
+                    courses: [
+                        {time: "10:00", title: "강화고인돌유적", desc: "세계유산으로 지정된 고대 석기시대 무덤."},
+                        {time: "11:00", title: "고려궁지", desc: "고려 왕조의 역사가 담긴 궁궐 터."},
+                        {time: "13:00", title: "조양방직 & 소창체험관", desc: "레트로 감성의 방직공장과 전통 소창 짜기 체험."},
+                        {time: "14:00", title: "강화화문석마을", desc: "전통 왕실 왕골 돗자리를 손으로 짜는 이색 체험."},
+                        {time: "15:00", title: "광성보", desc: "역사 깊은 해안 요새를 따라 걷는 경치 좋은 산책길."}
+                    ],
+                },
+                add_partner: "※ 본 상품은 <b>농어촌공사, 농림축산식품부, 강화군</b>의 지원을 받습니다.",
+                contact_msg: "더 많은 정보와 예약은 ssoluck.com으로<br>contact: ssoluck@tothepp.com"
+            },
+            zh: {
+                cover_tag: "高端乡村之旅",
+                cover_title: "感受律动，<br>编织历史",
+                cover_sub: "探寻韩国隐秘文化遗产的两段独特旅程。",
+                notice_sub1: "指南一",
+                notice_sub2: "指南二",
+                notice_title1: "特别预订优惠",
+                notice_title2: "费用包含",
+                notice_i1: "全程由专业英文导游陪同讲解。",
+                notice_i2: "提供从主要交通枢纽出发的往返专用穿梭班车。",
+                notice_i3: "建议穿着舒适的衣物和步行鞋。",
+                include1: "专业英文导游",
+                include2: "私人专属车辆（根据团队人数定制的28座高管车）",
+                include3: "1餐（午餐）",
+                include4: "行程中所包含的门票及体验费",
+                scan_book: "扫码开启您的冒险之旅",
+                brand_slogan: "连接真实的韩国",
+                p1_opt: "路线 02",
+                p1_loc: "忠北 永同",
+                p1_title: "击打北鼓，敲响长鼓",
+                p1_desc: "<span class='font-bold text-purple-900'>韵律与风味：国乐与葡萄之旅</span> 一场将韩国传统音乐之魂与亲手采摘时令甜美葡萄完美结合的感官之旅。",
+                p1_h1: "韩国律动：国乐体验",
+                p1_c1: "参观荣获吉尼斯世界纪录的巨鼓“天鼓”，并亲自体验长鼓等韩国传统乐器。",
+                p1_h2: "甜美葡萄：采摘季",
+                p1_c2: "在果园里亲手采摘新鲜葡萄，并享用纯正的当地乡村饮食。",
+                p2_opt: "路线 01",
+                p2_loc: "仁川 江华",
+                p2_title: "江华岛时光之门",
+                p2_desc: "<span class='font-bold text-amber-900'>历史与工艺：江华华纹席之旅</span> 探索拥有5000年历史的“露天博物馆”之岛，亲手编织专供皇室的草席杰作。",
+                p2_h1: "露天博物馆：历史漫步",
+                p2_c1: "游览从联合国教科文组织世界遗产支石墓，到高丽时期的古宫殿与要塞，漫步领略韩国历史。",
+                p2_h2: "皇家草编工艺：华纹席体验课",
+                p2_c2: "在工艺大师的指导下，用天然莎草编织属于您自己的高端室内装饰纪念品。",
+                book_now: "立即预订",
+                price_condition: "* 一日游，20人起成团",
+                why_tag: "为什么选择 SSOLUCK？",
+                why_title: "韩国流行文化(K-Culture)的根源",
+                feat_h1: "独一无二的纪念品",
+                feat_c1: "将您亲手制作或采摘的独特物品带回家，留作永恒的珍贵回忆。",
+                feat_h2: "专业英文导游",
+                feat_c2: "由热情的全球专家为您倾情讲述，带您深度解密历史与文化。",
+                feat_h3: "无忧出行体验",
+                feat_c3: "乘坐从首尔出发的高端穿梭巴士，安全便捷地前往隐秘的乡村目的地。",
+                review_text: `"有史以来最地道、最难忘的<br>韩国文化体验！"`,
+                add_info: "※ 行程可能根据当地实际情况有所变动。<br>具体商品详情请在预订页面进行确认。",
+                tour1: {
+                    courses: [
+                        {time: "10:00", title: "永同国乐体验村", desc: "集住宿与体验于一体的文化空间，在此可学习并演奏韩国传统音乐。"},
+                        {time: "13:00", title: "彩虹疗愈中心", desc: "以光、风、水为主题，缓解日常疲劳的综合型健康疗愈中心。"},
+                        {time: "14:00", title: "黑珍珠葡萄体验农场", desc: "亲手采摘并品尝鲜嫩多汁的永同新鲜葡萄。"},
+                        {time: "15:00", title: "月留峰", desc: "陡峭悬崖与清澈河流交织出的绝美画卷，相传连月亮也会驻足流连。"}
+                    ],
+                },
+                tour2: {
+                    courses: [
+                        {time: "10:00", title: "江华支石墓遗址", desc: "被列入世界文化遗产的远古石器时代墓葬。"},
+                        {time: "11:00", title: "高丽宫址", desc: "承载着高丽王朝历史的古宫殿遗址。"},
+                        {time: "13:00", title: "朝阳纺织 & 小布体验馆", desc: "充满复古文艺气息的纺织工厂改建空间与传统织造工艺体验。"},
+                        {time: "14:00", title: "江华华纹席村", desc: "亲手体验专供皇室的独特莎草华纹席编织工艺。"},
+                        {time: "15:00", title: "广城堡", desc: "沿着底蕴深厚的海防历史要塞进行风景优美的散步游览。"}
+                    ],
+                },
+                add_partner: "※ 本项目由 <b>韩国农村公社</b>、<b>农林畜产食品部</b> 及 <b>江华郡</b> 共同支持提供。",
+                contact_msg : "获取更多资讯并进行预订请访问 ssoluck.com<br>联系邮箱: ssoluck@tothepp.com"
+            },
+            ru: {
+                cover_tag: "Премиальный сельский тур",
+                cover_title: "Почувствуйте ритм,<br>соткущий историю",
+                cover_sub: "Два уникальных путешествия вглубь скрытого наследия Кореи.",
+                notice_sub1: "ПУТЕВОДИТЕЛЬ 1",
+                notice_sub2: "ПУТЕВОДИТЕЛЬ 2",
+                notice_title1: "Специальные условия бронирования",
+                notice_title2: "В стоимость включено",
+                notice_i1: "Полный маршрут в сопровождении профессионального англоязычного гида.",
+                notice_i2: "Предоставляется комфортабельный трансфер (туда и обратно) от главных транспортных узлов.",
+                notice_i3: "Рекомендуется надевать удобную одежду и обувь для ходьбы.",
+                include1: "Профессиональный англоязычный гид-экскурсовод",
+                include2: "Частный транспорт (28-местный автобус премиум-класса, подобранный под размер группы)",
+                include3: "1 прием пищи (Обед)",
+                include4: "Входные билеты и стоимость мастер-классов по программе",
+                scan_book: "Отсканируйте, чтобы забронировать путешествие",
+                brand_slogan: "Прикоснитесь к настоящей Корее",
+                p1_opt: "ТУР 02",
+                p1_loc: "Ёндон, Чунбук",
+                p1_title: "Ударьте в Бук, сыграйте на Чангу",
+                p1_desc: "<span class='font-bold text-purple-900'>Ритм и вкус: Тур традиционной музыки и сбора винограда</span> Сенсорное путешествие, объединяющее душу корейской традиционной музыки со сбором спелого сезонного винограда.",
+                p1_h1: "Корейский ритм: Мастер-класс Гугак",
+                p1_c1: "Увидьте «Чхонго», самый большой барабан в мире, и сыграйте на традиционных инструментах, таких как Чангу.",
+                p1_h2: "Сладкий виноград: Сезон сбора урожая",
+                p1_c2: "Соберите свежий виноград прямо в саду и насладитесь аутентичным обедом в деревенском стиле.",
+                p2_opt: "ТУР 01",
+                p2_loc: "Канхва, Инчхон",
+                p2_title: "Врата времени острова Канхвадо",
+                p2_desc: "<span class='font-bold text-amber-900'>История и ремесло: Тур Хвамунсок на Канхвадо</span> Исследуйте остров-музей под открытым небом с 5000-летней историей и создайте королевский шедевр из соломы.",
+                p2_h1: "Музей под открытым небом: Историческая прогулка",
+                p2_c1: "Пройдите сквозь историю Кореи от дольменов ЮНЕСКО до древних дворцов и крепостей династии Корё.",
+                p2_h2: "Королевское ремесло: Мастер-класс Хвамунсок",
+                p2_c2: "Сотките уникальный сувенир премиум-класса для интерьера из осоки вместе с потомственным мастером.",
+                book_now: "Забронировать",
+                price_condition: "* 1 день, группа от 20 человек",
+                why_tag: "Почему SSOLUCK?",
+                why_title: "Истоки K-Culture (Корейской культуры)",
+                feat_h1: "Уникальные сувениры",
+                feat_c1: "Заберите с собой уникальные вещи, созданные или собранные своими руками, которые останутся с вами навсегда.",
+                feat_h2: "Экспертные англоязычные гиды",
+                feat_c2: "Погрузитесь в историю и культуру благодаря живым рассказам от дружелюбных международных экспертов.",
+                feat_h3: "Транспорт без забот",
+                feat_c3: "Путешествуйте безопасно в скрытые уголки Кореи на премиальном трансфере прямо из Сеула.",
+                review_text: `"Самый аутентичный и незабываемый<br>опыт знакомства с корейской культурой!"`,
+                add_info: "※ Маршрут может быть изменен в зависимости от местных обстоятельств.<br>Пожалуйста, проверьте страницу бронирования для получения подробной информации о продукте.",
+                tour1: {
+                    courses: [
+                        {time: "10:00", title: "Деревня традиционной музыки Гугак в Ёндоне", desc: "Культурное пространство для проживания и обучения, где можно освоить корейские традиционные инструменты."},
+                        {time: "13:00", title: "Оздоровительный центр Радуга<br>(Rainbow Healing Center)", desc: "Комплексный велнес-центр для снятия повседневной усталости с зонами света, ветра и воды."},
+                        {time: "14:00", title: "Опытная ферма винограда Хэкчинчжу", desc: "Свежий урожайный опыт: сбор и дегустация сладкого, сочного винограда сорта Ёндон."},
+                        {time: "15:00", title: "Пик Вольюбон", desc: "Живописный пейзаж со скалистыми утесами и чистой рекой, где, по легенде, задерживается сама луна."}
+                    ],
+                },
+                tour2: {
+                    courses: [
+                        {time: "10:00", title: "Район дольменов на острове Канхвадо", desc: "Древние мегалитические гробницы каменного века, включенные в список всемирного наследия ЮНЕСКО."},
+                        {time: "11:00", title: "Дворцовая территория Корёгун", desc: "Историческое место, где располагался королевский дворец династии Корё."},
+                        {time: "13:00", title: "Фабрика Чоян Банчжик и Дом ремесла Сочхан", desc: "Атмосферное ретро-пространство бывшей текстильной фабрики и знакомство с традиционным ткачеством."},
+                        {time: "14:00", title: "Деревня Хвамунсок на Канхвадо", desc: "Уникальный практический опыт плетения знаменитых королевских матов из осоки."},
+                        {time: "15:00", title: "Морская крепость Квансонбо", desc: "Живописная прогулка вдоль исторического форта береговой обороны."}
+                    ],
+                },
+                add_partner: "※ При поддержке <b>Корейской корпорации сельских сообществ (KRC)</b>, <b>Министерства сельского хозяйства, продовольствия и сельских дел Республики Корея</b> и <b>администрации уезда Канхва-гун</b>.",
+                contact_msg : "Узнайте больше и забронируйте на ssoluck.com<br>Контакты: ssoluck@tothepp.com"
+            },
+        };
+
+        function insertTourCourses(lang, targetId, dataKey) {
+            const data = i18nData[lang][dataKey];
+            let tourCourses = '';
+            data.courses.forEach(function(o, i) {
+                    tourCourses += `<div class="pl-4 ${i == data.courses.length-1 ? "" : "border-l border-dashed border-rural-green/40"} relative flex items-start flex-col gap-1">
+                        <span class="absolute left-[-5.5px] top-0 w-2.5 h-2.5 rounded-full bg-rural-green"></span>
+                        <span class="text-[10px] font-bold text-rural-ochre leading-none">${o.time}</span>
+                        <h4 class="text-xs font-bold text-gray-800">${o.title}</h4>
+                        <p class="${dataKey =="tour1" ? "mb-4.5" : "mb-4"} text-[10px] text-gray-500 font-light leading-snug">${o.desc}</p>
+                    </div>`;
+            });
+            
+            document.getElementById(targetId).innerHTML = `
+                <div class="relative my-auto">
+                ${tourCourses}
+                </div>
+                <div class="h-2"></div>
+            `;
+        }
+
+        function switchLang(lang) {
+            // 모든 다국어 데이터 바인딩 요소 업데이트
+            document.querySelectorAll('[data-key]').forEach(elem => {
+                const key = elem.getAttribute('data-key');
+                if (i18nData[lang][key]) {
+                    elem.innerHTML = i18nData[lang][key];
+                }
+            });
+
+            insertTourCourses(lang, "comp-tour-1", 'tour1');
+            insertTourCourses(lang, "comp-tour-2", 'tour2');
+            
+            // 토글 버튼 디자인 활성화/비활성화 처리
+            const btnEn = document.getElementById('btn-en');
+            const btnKo = document.getElementById('btn-ko');
+            const btnZh = document.getElementById('btn-zh');
+            const btnRu = document.getElementById('btn-ru');
+
+            if (lang === 'en') {
+                btnEn.className = "px-3 py-2 rounded-full text-xs font-semibold bg-emerald-700 text-white transition-all";
+                btnKo.className = "px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all";
+                btnZh.className = "px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all";
+                btnRu.className = "px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all";
+            } else if(lang == 'zh') {
+                btnZh.className = "px-3 py-2 rounded-full text-xs font-semibold bg-emerald-700 text-white transition-all";
+                btnKo.className = "px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all";
+                btnEn.className = "px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all";
+                btnRu.className = "px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all";
+            } else if(lang == 'ru') {
+                btnRu.className = "px-3 py-2 rounded-full text-xs font-semibold bg-emerald-700 text-white transition-all";
+                btnKo.className = "px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all";
+                btnEn.className = "px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all";
+                btnZh.className = "px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all";
+            } else {
+                btnKo.className = "px-3 py-2 rounded-full text-xs font-semibold bg-emerald-700 text-white transition-all";
+                btnEn.className = "px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all";
+                btnZh.className = "px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all";
+                btnRu.className = "px-3 py-2 rounded-full text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-all";
+            }
+
+            document.documentElement.lang = lang;
+            const wrapper = document.querySelector('.leaflet-wrapper');
+            wrapper.classList.remove('lang-en', 'lang-zh', 'lang-ru', 'lang-ko');
+            wrapper.classList.add(`lang-${lang}`);
+        }
+
+        function setViewport() {
+            // 기존에 생성된 뷰포트 태그가 있다면 제거
+            const oldMeta = document.querySelector('meta[name="viewport"]');
+            if (oldMeta) oldMeta.remove();
+
+            const meta = document.createElement('meta');
+            meta.name = "viewport";
+
+            // 개발자 도구 모바일 뷰 또는 실제 모바일 화면 폭(768px 이하) 감지
+            if (window.innerWidth <= 768) {
+                // 화면을 강제로 414px 크기로 압축하여 비율 유지
+                meta.content = "width=100%, initial-scale=1.0, user-scalable=no";
+            } else {
+                // PC 화면에서는 정상 반응형 규격 적용
+                meta.content = "width=device-width, initial-scale=1.0";
+            }
+            document.getElementsByTagName('head')[0].appendChild(meta);
+        }
+
+        // 초기 실행
+        setViewport();
+        switchLang('en');
+
+        // PC 개발자 도구에서 창 크기를 조절할 때도 실시간 대응을 원할 경우 (선택사항)
+        // window.addEventListener('resize', setViewport);
+
+    </script>
+</body>
+</html>

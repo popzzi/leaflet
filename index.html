@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const idParam = urlParams.get('id'); // 예: 'day', 'night', 'intro' 등
+
+        // 2. id 파라미터가 실제로 주소창에 존재할 때만 작동
+        if (idParam) {
+            // 주소창 뒷부분(?id=...)을 떼어낸 순수 URL 경로 확보
+            let pureUrl = window.location.href.split('?')[0];
+            const targetFile = encodeURIComponent(idParam) + '.html'; 
+
+            if (pureUrl.endsWith('index.html')) {
+                window.location.href = pureUrl.replace('index.html', targetFile);
+            } else {
+                if (pureUrl.endsWith('/')) {
+                    window.location.href = pureUrl + targetFile;
+                } else {
+                    window.location.href = pureUrl + '/' + targetFile;
+                }
+            }
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rural Tourism Tri-Fold Brochure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        /* Enforce strict A4 Landscape Proportions (297:210) */
+        .a4-landscape {
+            aspect-ratio: 297 / 210;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* Custom Earthy Palette */
+        .bg-rural-green { background-color: #2D4A3E; }
+        .text-rural-green { color: #2D4A3E; }
+        .bg-rural-ochre { background-color: #D4A373; }
+        .bg-rural-clay { background-color: #E6CCB2; }
+        .bg-rural-cream { background-color: #FAEDCD; }
+
+        /* Fold line simulations for preview */
+        .fold-line-left { border-right: 1px dashed rgba(0,0,0,0.15); }
+        .fold-line-right { border-left: 1px dashed rgba(0,0,0,0.15); }
+        
+        /* Specific panel flex percentages to match the folder closure specs */
+        [class^="outside-"], [class^="inside-"] { width: 33.33%; }   /* 100mm */
+    </style>
+</head>
+<body class="p-4 md:p-8 flex flex-col items-center gap-8 text-3xl">
+
+    <div class="w-full max-w-5xl flex justify-between items-center bg-white p-4 rounded-xl shadow-sm">
+        <span class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Brochure Preview System</span>
+        <div class="flex gap-2">
+            <button onclick="switchLanguage('en')" id="btn-en" class="px-4 py-2 rounded-lg text-sm font-bold bg-rural-green text-white shadow-sm transition-all">English</button>
+            <button onclick="switchLanguage('ko')" id="btn-ko" class="px-4 py-2 rounded-lg text-sm font-bold bg-gray-200 text-gray-700 transition-all">한국어</button>
+        </div>
+    </div>
+
+    <div class="w-full flex flex-col items-center gap-2">
+        <h2 class="text-xs font-bold text-gray-400 tracking-widest uppercase self-start max-w-5xl w-full mx-auto px-4">Spread 1: Outside View</h2>
+        <div class="a4-landscape bg-white shadow-2xl rounded-sm overflow-hidden flex relative">
+            <div id="comp-booking" class="outside-left bg-rural-cream p-6 flex flex-col justify-between fold-line-left"></div>
+            
+            <div id="comp-back-cover" class="outside-center bg-white p-6 flex flex-col justify-between"></div>
+            
+            <div id="comp-front-cover" class="outside-right relative text-white flex flex-col justify-center gap-3 p-6 fold-line-right bg-cover bg-center" style="background-image: linear-gradient(to bottom, rgba(45,74,62,0.3), rgba(45,74,62,0.85)), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=600&q=80')"></div>
+        </div>
+    </div>
+
+    <div class="w-full flex flex-col items-center gap-2 mt-8">
+        <h2 class="text-xs font-bold text-gray-400 tracking-widest uppercase self-start max-w-5xl w-full mx-auto px-4">Spread 2: Inside View</h2>
+        <div class="a4-landscape bg-white shadow-2xl rounded-sm overflow-hidden flex">
+            <div id="comp-tour-1" class="inside-left p-6 bg-slate-50 flex flex-col justify-between fold-line-left"></div>
+            
+            <div id="comp-gallery" class="inside-center p-5 bg-white flex flex-col justify-between"></div>
+            
+            <div id="comp-tour-2" class="inside-right p-6 bg-amber-50/40 flex flex-col justify-between fold-line-right"></div>
+        </div>
+    </div>
+
+    <script>
+        const leafletData = {
+            en: {
+                frontCover: {
+                    title: "RURAL EXPERIENCES",
+                    subtitle: "Authentic Rural Journeys",
+                    tagline: "Discover the heart of the country"
+                },
+                booking: {
+                    title: "Ready to Begin?",
+                    step1: "Scan the QR code below",
+                    step2: "Select your preferred package",
+                    step3: "Secure instant global booking",
+                    btn1: "Book Tour 1",
+                    btn2: "Book Tour 2"
+                },
+                backCover: {
+                    title: "Your Travel Partners",
+                    board: "National Rural Tourism Board",
+                    agency: "EcoRoutes Travel Agency Group",
+                    hotline: "24/7 Multi-language Support: +82-2-1234-5678"
+                },
+                tour1: {
+                    title: "Beat the Buk, Play the Janggu",
+                    courses: [
+                        {time: "10:00", title: "Yeongdong Gugak Experience Village", desc: "Guided walk through ancient pine forests."},
+                        {time: "13:00", title: "Rainbow Healing Center", desc: "Organic traditional feast at a heritage estate."},
+                        {time: "14:00", title: "Heukjinju Grape Experience Farm", desc: "Hands-on pottery workshop with a master artisan."},
+                        {time: "15:00", title: "Wollyubong Peak", desc: "Hands-on pottery workshop with a master artisan."}
+                    ],
+                },
+                gallery: {
+                    title: "Captured Moments",
+                    img1: "Harvest Joy",
+                    img2: "Timeless Villages",
+                    img3: "Warm Hospitality",
+                    img4: "Taste the Earth"
+                },
+                tour2: {
+                    title: "Ganghwa Time Gate: Walk 1,000 Years in 1 day",
+                    courses: [
+                        {time: "10:00", title: "Ganghwa Dolmen Sites", desc: "Guided walk through ancient pine forests."},
+                        {time: "11:00", title: "Goryeogung Palace Site", desc: "Organic traditional feast at a heritage estate."},
+                        {time: "13:00", title: "Joyang Bangjik", desc: "Hands-on pottery workshop with a master artisan."},
+                        {time: "13:30", title: "Sochang Experience Hall", desc: "Hands-on pottery workshop with a master artisan."},
+                        {time: "14:00", title: "Ganghwa Hwamunseok Village", desc: "Hands-on pottery workshop with a master artisan."},
+                        {time: "15:00", title: "Gwangseongbo Fortress", desc: "Hands-on pottery workshop with a master artisan."}
+                    ],
+                }
+            },
+            ko: {
+                frontCover: {
+                    title: "자연의 품으로",
+                    subtitle: "정통 농촌 체험 여행",
+                    tagline: "한국전통과 숨겨진 유산을 발견하고, 진정한 휴식을 만나보세요."
+                },
+                booking: {
+                    title: "여행을 시작할까요?",
+                    steps: [
+                        "당신의 성향에 맞는 투어를 선택하세요.",
+                        "선택한 투어의 QR 코드를 스캔하세요.",
+                        "원하는 일정을 선택하세요.",
+                        "안전하고 신속하게 예약을 완료하세요.",
+                    ],
+                    btn1: "투어 1 예약하기",
+                    btn2: "투어 2 예약하기"
+                },
+                backCover: {
+                    title: "신뢰할 수 있는 여행 파트너",
+                    board: "국립농촌관광진흥원",
+                    agency: "에코루트 여행사 그룹",
+                    hotline: "24/7 다국어 고객센터: +82-2-1234-5678"
+                },
+                tour1: {
+                    title: "북치고 장구치고", 
+                    courses: [
+                        {time: "11:00", title: "영동국악체험촌", desc: "Guided walk through ancient pine forests."},
+                        {time: "13:00", title: "레인보우힐링센터", desc: "Organic traditional feast at a heritage estate."},
+                        {time: "14:00", title: "훍진주포도체험마을", desc: "Hands-on pottery workshop with a master artisan."},
+                        {time: "15:00", title: "월류봉", desc: "Hands-on pottery workshop with a master artisan."}
+                    ]
+                },
+                gallery: {
+                    title: "생생한 여정의 순간들",
+                    img1: "수확의 기쁨",
+                    img2: "세월을 간직한 마을",
+                    img3: "따뜻한 정",
+                    img4: "대지의 맛"
+                },
+                tour2: {
+                    title: "천년을 걷는 강화 시간여행",
+                    courses: [
+                        {time: "10:00", title: "강화고인돌유적", desc: "Guided walk through ancient pine forests."},
+                        {time: "11:00", title: "고려궁지", desc: "Organic traditional feast at a heritage estate."},
+                        {time: "13:00", title: "조양방직", desc: "Hands-on pottery workshop with a master artisan."},
+                        {time: "13:30", title: "소창체험관", desc: "Hands-on pottery workshop with a master artisan."},
+                        {time: "14:00", title: "강화화문석마을", desc: "Hands-on pottery workshop with a master artisan."},
+                        {time: "15:00", title: "광성보", desc: "Hands-on pottery workshop with a master artisan."}
+                    ]
+                }
+            }
+        };
+
+        let currentLang = 'ko'; //초기 언어 선택
+        switchLanguage(currentLang);
+
+        // =========================================================================
+        // COMPONENT RENDERING ENGINE
+        // =========================================================================
+        function renderBrochure() {
+            const data = leafletData[currentLang];
+
+            // 1. Component: Front Cover
+            document.getElementById('comp-front-cover').innerHTML = `
+                <div class="border-l-4 border-rural-ochre pl-3 mt-4">
+                    <p class="text-xs font-bold tracking-widest uppercase text-rural-clay">${data.frontCover.subtitle}</p>
+                </div>
+                <div class="mb-6">
+                    <h1 class="text-3xl font-black tracking-tight leading-none mb-3">${data.frontCover.title}</h1>
+                    <p class="text-xs text-gray-200 font-light leading-relaxed">${data.frontCover.tagline}</p>
+                </div>
+            `;
+
+            // 2. Component: Booking Panel
+            let process = "";
+            data.booking.steps.forEach(function(o,i){
+                process += `<li class="flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-rural-green text-white flex items-center justify-center text-[10px]">${i+1}</span> ${o}</li>`;
+            });
+            
+            document.getElementById('comp-booking').innerHTML = `
+                <div>
+                    <h3 class="text-md font-bold text-rural-green border-b pb-2 border-emerald-800/10">${data.booking.title}</h3>
+                    <ul class="mt-4 space-y-3 text-xs text-emerald-950 font-medium">
+                    ${process}
+                    </ul>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <div class="bg-white p-2 rounded-lg shadow-sm flex flex-col items-center justify-center">
+                        <div class="w-16 h-16 bg-gray-200 mb-1 flex items-center justify-center text-[8px] text-gray-400 font-mono">[QR CODE]</div>
+                        <span class="text-[9px] font-bold text-center text-rural-green">${data.booking.btn1}</span>
+                    </div>
+                    <div class="bg-white p-2 rounded-lg shadow-sm flex flex-col items-center justify-center">
+                        <div class="w-16 h-16 bg-gray-200 mb-1 flex items-center justify-center text-[8px] text-gray-400 font-mono">[QR CODE]</div>
+                        <span class="text-[9px] font-bold text-center text-rural-green">${data.booking.btn2}</span>
+                    </div>
+                </div>
+            `;
+
+            // 3. Component: Back Cover
+            document.getElementById('comp-back-cover').innerHTML = `
+                <div>
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">${data.backCover.title}</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-2 p-2 border border-gray-100 rounded-lg">
+                            <div class="w-6 h-6 rounded bg-rural-green/10 flex items-center justify-center text-xs">🏛️</div>
+                            <p class="text-[11px] font-semibold text-gray-700">${data.backCover.board}</p>
+                        </div>
+                        <div class="flex items-center gap-2 p-2 border border-gray-100 rounded-lg">
+                            <div class="w-6 h-6 rounded bg-rural-green/10 flex items-center justify-center text-xs">🌿</div>
+                            <p class="text-[11px] font-semibold text-gray-700">${data.backCover.agency}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-t pt-4 border-gray-100 text-center">
+                    <p class="text-[10px] text-gray-400 font-medium">${data.backCover.hotline}</p>
+                </div>
+            `;
+
+            // 4. Component: Tour 1 Itinerary
+            let tour1courses = '';
+            data.tour1.courses.forEach(function(o) {
+                 tour1courses += `<div class="relative">
+                        <span class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-rural-green"></span>
+                        <span class="text-[10px] font-bold text-rural-ochre">${o.time}</span>
+                        <h4 class="text-xs font-bold text-gray-800">${o.title}</h4>
+                        <p class="text-[10px] text-gray-500 font-light leading-snug">${o.desc}</p>
+                    </div>`;
+            });
+           
+            document.getElementById('comp-tour-1').innerHTML = `
+                <h3 class="text-sm font-bold text-rural-green border-b-2 border-rural-green pb-2 flex items-center gap-1">
+                    ${data.tour1.title}
+                </h3>
+                <div class="relative pl-4 border-l border-dashed border-rural-green/40 space-y-4 my-auto py-2">
+                ${tour1courses}
+                </div>
+                <div class="h-2"></div>
+            `;
+
+            // 5. Component: Center Gallery
+            document.getElementById('comp-gallery').innerHTML = `
+                <h3 class="text-xs font-bold text-center text-gray-400 tracking-widest uppercase mb-2">${data.gallery.title}</h3>
+                <div class="grid grid-cols-2 gap-2 h-full pb-2">
+                    <div class="relative rounded-lg overflow-hidden shadow-sm bg-cover bg-center flex items-end p-2" style="background-image: linear-gradient(to top, rgba(0,0,0,0.7), transparent), url('https://images.unsplash.com/photo-1592417817098-8f3d6eb19675?auto=format&fit=crop&w=300&q=80')">
+                        <span class="text-[9px] font-medium text-white">${data.gallery.img1}</span>
+                    </div>
+                    <div class="relative rounded-lg overflow-hidden shadow-sm bg-cover bg-center flex items-end p-2" style="background-image: linear-gradient(to top, rgba(0,0,0,0.7), transparent), url('https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=300&q=80')">
+                        <span class="text-[9px] font-medium text-white">${data.gallery.img2}</span>
+                    </div>
+                    <div class="relative rounded-lg overflow-hidden shadow-sm bg-cover bg-center flex items-end p-2" style="background-image: linear-gradient(to top, rgba(0,0,0,0.7), transparent), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=300&q=80')">
+                        <span class="text-[9px] font-medium text-white">${data.gallery.img3}</span>
+                    </div>
+                    <div class="relative rounded-lg overflow-hidden shadow-sm bg-cover bg-center flex items-end p-2" style="background-image: linear-gradient(to top, rgba(0,0,0,0.7), transparent), url('https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=300&q=80')">
+                        <span class="text-[9px] font-medium text-white">${data.gallery.img4}</span>
+                    </div>
+                </div>
+            `;
+
+            // 6. Component: Tour 2 Itinerary
+            let tour2courses = '';
+            data.tour2.courses.forEach(function(o) {
+                tour2courses += `<div class="bg-white p-2.5 rounded-xl border border-amber-200/40 shadow-sm">
+                        <div class="flex justify-between items-center mb-0.5">
+                            <h4 class="text-xs font-bold text-gray-800">${o.title}</h4>
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rural-ochre/10 text-rural-ochre">${o.time}</span>
+                        </div>
+                        <p class="text-[10px] text-gray-500 font-light leading-snug">${o.desc}</p>
+                    </div>`;
+            });
+            
+            document.getElementById('comp-tour-2').innerHTML = `
+                <h3 class="text-sm font-bold text-rural-green border-b-2 border-rural-green pb-2 flex items-center gap-1">
+                    ${data.tour2.title}
+                </h3>
+                <div class="space-y-3 my-auto py-2">
+                ${tour2courses}
+                </div>
+                <div class="h-2"></div>
+            `;
+        }
+
+        // Language Switch Controller
+        function switchLanguage(lang) {
+            currentLang = lang;
+            
+            // Toggle active button stylings
+            document.getElementById('btn-en').className = lang === 'en' ? 'px-4 py-2 rounded-lg text-sm font-bold bg-rural-green text-white shadow-sm transition-all' : 'px-4 py-2 rounded-lg text-sm font-bold bg-gray-200 text-gray-700 transition-all';
+            document.getElementById('btn-ko').className = lang === 'ko' ? 'px-4 py-2 rounded-lg text-sm font-bold bg-rural-green text-white shadow-sm transition-all' : 'px-4 py-2 rounded-lg text-sm font-bold bg-gray-200 text-gray-700 transition-all';
+            
+            renderBrochure();
+        }
+    </script>
+</body>
+</html>
