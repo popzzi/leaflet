@@ -9,20 +9,6 @@
     <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style> 
-        /* body { font-family: 'Poppins', 'Noto Serif KR', sans-serif; background-color: #f3f4f6; }
-        
-        .leaflet-page {
-            width: 1242px;         
-            height: 878px;        
-            min-width: 1242px;
-            min-height: 878px;
-        }
-        .panel {
-            width: 414px;         
-            height: 100%;
-        } */
-
-        
         .serif-title { font-family: 'Noto Serif KR', serif; }
         .bg-rural-green { background-color: #2D4A3E; }
 
@@ -43,8 +29,6 @@
             width: 100%;
             height: 100%;
             display: flex;
-            /* align-items: center; */
-            /* justify-content: center; */
         }
 
         .leaflet-container {
@@ -64,19 +48,27 @@
             height: 878px;
             scroll-snap-align: start;
             box-sizing: border-box;
-            overflow: hidden auto;
+            overflow: hidden;
             background-color: #f3f4f6;
         }
-
+        
+        @media (max-width: 768px) { /* 모바일 미디어쿼리 내부 */
+            .leaflet-container {
+                display: flex !important;
+                overflow-x: auto !important;
+                overflow-y: auto !important; /* 가로 박스 자체는 세로로 안 스크롤되게 차단 */
+                
+                /* ⭐️ 핵심: 가로 스크롤(pan-x)과 기본 세로 조작(manipulation)만 허용 */
+                touch-action: pan-x manipulation !important; 
+                
+                /* 기존에 들어가 있던 스크롤 스냅이 있다면 부드럽게 조절 */
+                scroll-snap-type: x proximity !important; /* mandatory 대신 proximity를 쓰면 자석 효과가 덜 예민해집니다 */
+            }
+        }
         /* ===================================================
-        2. 미디어 쿼리: PC 세팅 (769px 이상일 때 인쇄 판형 완벽 고정)
+        2. 미디어 쿼리: PC 세팅 (769px 이상일 때)
         =================================================== */
         @media (min-width: 769px) {
-            html, body {
-                /* overflow-x: visible; */
-                /* overflow-y: auto; */
-            }
-
             .leaflet-wrapper {
                 /* width: auto;
                 height: auto; */
@@ -136,7 +128,6 @@
             padding: 1.25rem !important;
         }
         .lang-ru * {
-        /* .leading-relaxed, .lang-ru .leading-normal, .lang-ru .leading-snug { */
             line-height: 1 !important;
         }
         .lang-ru .w-65 {
@@ -166,7 +157,7 @@
             /* 3. 인쇄 용지 설정 (A4 가로, 여백 제로) */
             @page {
                 size: A4 landscape;
-                margin: 0; /* 브라우저 여백을 완전히 없애야 scale 계산이 정확해집니다. */
+                margin: 0; 
             }
 
             html, body {
@@ -228,8 +219,6 @@
             /* 자식 요소들이 가질 수 있는 최소 너비를 확보해주거나 늘려줌 */
             .justify-between > * {
                 flex-shrink: 0 !important;
-                /* 혹은 가로 균등 배분이 필요하다면 아래 속성 사용 */
-                /* flex: 1 !important; */
             }
                           
             .mt-3.w-full.h-110.bg-cover {
@@ -246,7 +235,7 @@
             .flex.w-full.h-full.items-center.justify-center {
                 display: flex !important;
                 width: 100% !important;
-                height: auto !important; /* 부모가 밀지 않으므로 auto나 고정값 취택 */
+                height: auto !important; 
                 min-height: 60px;
                 align-items: center;
                 justify-content: center;
@@ -266,13 +255,9 @@
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
 
-                /* 2. 충돌을 일으키는 bg-repeat-space 대신 표준 repeat 사용 */
                 background-repeat: repeat !important;
                 background-size: 40px !important;
-
-                /* 3. 핵심: 출력 시 날아가는 opacity를 보완하기 위해 투명도를 100%로 올리거나 필터 사용 */
                 opacity: 1 !important; 
-                /* 만약 패턴이 너무 진하게 출력된다면 프린터가 인식할 수 있는 filter 속성으로 우회합니다 */
                 filter: opacity(0.3) !important; 
             }
         }
@@ -857,10 +842,6 @@
         // 초기 실행
         setViewport();
         switchLang('en');
-
-        // PC 개발자 도구에서 창 크기를 조절할 때도 실시간 대응을 원할 경우 (선택사항)
-        // window.addEventListener('resize', setViewport);
-
     </script>
 </body>
 </html>
