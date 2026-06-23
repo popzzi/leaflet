@@ -52,19 +52,16 @@
             background-color: #f3f4f6;
         }
         
-        @media (max-width: 768px) { /* 모바일 미디어쿼리 내부 */
+        /* @media (max-width: 768px) { 
             .leaflet-container {
                 display: flex !important;
                 overflow-x: auto !important;
-                overflow-y: auto !important; /* 가로 박스 자체는 세로로 안 스크롤되게 차단 */
+                overflow-y: auto !important; 
                 
-                /* ⭐️ 핵심: 가로 스크롤(pan-x)과 기본 세로 조작(manipulation)만 허용 */
                 touch-action: pan-x manipulation !important; 
-                
-                /* 기존에 들어가 있던 스크롤 스냅이 있다면 부드럽게 조절 */
-                scroll-snap-type: x proximity !important; /* mandatory 대신 proximity를 쓰면 자석 효과가 덜 예민해집니다 */
+                scroll-snap-type: x proximity !important; 
             }
-        }
+        } */
         /* ===================================================
         2. 미디어 쿼리: PC 세팅 (769px 이상일 때)
         =================================================== */
@@ -275,11 +272,11 @@
 
     <div class="leaflet-wrapper">
         <div class="leaflet-container">
-            <div class="panel p-cover relative flex flex-col justify-between overflow-hidden bg-emerald-950 text-white"> 
+            <div class="panel p-cover relative flex flex-col justify-center overflow-hidden bg-emerald-950 text-white"> 
                 <div class="absolute inset-0 opacity-40 bg-cover bg-center" style="background-image: url('rural/ricardo-gomez-angel-Gh_Oc8USMe8-unsplash.jpg');"></div>
                 <div class="absolute inset-0 bg-gradient-to-b from-emerald-950/70 via-emerald-950/40 to-emerald-950/90"></div>
 
-                <div class="relative p-8 pt-12 z-10">
+                <div class="relative p-8 pb-30 mb-60 z-10">
                      <div class="p-2 bg-contain bg-no-repeat w-[120px] h-10" style="background-image: url('rural/SSOLUCK logo_Color.png');"></div>
                 </div>
                 
@@ -842,6 +839,69 @@
         // 초기 실행
         setViewport();
         switchLang('en');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const scrollContainer = document.querySelector('.leaflet-container'); 
+            if (!scrollContainer) return;
+
+            let scrollTimeout;
+            let isScrolling = false;
+            
+            // 시작 시점의 스크롤 좌표들을 기록할 변수
+            let startLeft = scrollContainer.scrollLeft;
+            let startTop = window.scrollY || document.documentElement.scrollTop;
+            let lastScrollLeft = scrollContainer.scrollLeft;
+
+            scrollContainer.addEventListener('scroll', () => {
+                const currentScrollLeft = scrollContainer.scrollLeft;
+                const currentScrollTop = window.scrollY || document.documentElement.scrollTop;
+
+                if (!isScrolling) {
+                    const diffX = Math.abs(currentScrollLeft - startLeft);
+                    const diffY = Math.abs(currentScrollTop - startTop);
+
+                    // 단순 미세 흔들림(예: 3px 이하)은 무시합니다.
+                    if (diffX < 3 && diffY < 3) return; 
+
+                    // 가로로 움직인 거리(diffX)가 세로로 움직인 거리(diffY)보다 클 때만 가로 스크롤로 인정!
+                    if (diffX > diffY) {
+                        isScrolling = true;
+                        console.log("🌀 [판정 성공] 확실한 가로 스크롤 감지: 세로 잠금 작동");
+                        
+                        // 세로 스크롤을 완전히 잠급니다.
+                        document.documentElement.style.overflowY = 'hidden';
+                        document.body.style.overflowY = 'hidden';
+                    } else {
+                        return;
+                    }
+                }
+
+                clearTimeout(scrollTimeout);
+
+                scrollTimeout = setTimeout(() => {
+                    isScrolling = false;
+                    
+                    document.documentElement.style.overflowY = 'auto';
+                    document.body.style.overflowY = 'auto';
+                    console.log("🔓 가로 스크롤 종료: 세로 잠금 해제");
+
+                    if (currentScrollLeft !== lastScrollLeft) {
+                        // top-bottom 왔다갔다 하도록
+                        if(scrollContainer.scrollTop == 0) {
+                            scrollContainer.scrollTop = 192;
+                        } else {
+                            scrollContainer.scrollTop = 0;
+                        }
+                        lastScrollLeft = currentScrollLeft;
+                    }
+
+                    startLeft = scrollContainer.scrollLeft;
+                    startTop = window.scrollY || document.documentElement.scrollTop;
+
+                }, 250);
+            }, { passive: true });
+        });
+
     </script>
 </body>
 </html>
